@@ -1,0 +1,8 @@
+{
+    "type": "module",
+    "private": true,
+    "dependencies": {
+        "nodemailer": "7.0.5",
+        "string-dedent": "3.0.2"
+    }
+}

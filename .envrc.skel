@@ -1,0 +1,6 @@
+export SMTP_HOST=
+export SMTP_PORT=
+export SMTP_USER=
+export SMTP_PASS=
+export FROM_NAME=
+export FROM_EMAIL=

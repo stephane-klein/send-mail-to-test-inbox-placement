@@ -2,7 +2,9 @@
     "type": "module",
     "private": true,
     "dependencies": {
+        "csv-parse": "6.1.0",
         "nodemailer": "7.0.5",
-        "string-dedent": "3.0.2"
+        "string-dedent": "3.0.2",
+        "yargs": "18.0.0"
     }
 }

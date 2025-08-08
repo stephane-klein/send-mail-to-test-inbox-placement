@@ -15,12 +15,12 @@ Edit `.envrc`.
 $ direnv allow
 ```
 
-Go to the “Spam Checker” section of <https://app.mailreach.co> and copy the seed list and the code to insert into the emails in the `send.js` file.
+Go to the “Spam Checker” section of <https://app.mailreach.co> and export seed list to `/emails.csv`.
 
-Then, simply run:
+Retrieve the code ID and select the type of destination email address (personal or professional), then pass these parameters as options to `./send.js`:
 
 ```
-$ ./send.js
+$ ./send.js --code-id <CODE_ID> --inbox-type=<personal|professional>
 ```
 
 Go back to MailReach Spam Checker and observe the test results.

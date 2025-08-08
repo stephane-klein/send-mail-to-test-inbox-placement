@@ -1,6 +1,10 @@
 #!/usr/bin/env node
+import fs from 'fs';
 import nodemailer from 'nodemailer';
 import dedent from 'string-dedent';
+import { parse } from "csv-parse/sync";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 // Create a transporter for SMTP
 const transporter = nodemailer.createTransport({
@@ -13,17 +17,17 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-async function sendMail(to, id) {
+async function sendMailToPersonalInbox({ toEmail, firstname, lastname, codeId }) {
     try {
         await transporter.verify();
         console.log('✅ SMTP server ready');
 
         const info = await transporter.sendMail({
             from: `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`,
-            to: to,
+            to: toEmail,
             subject: 'Nouvelle et projet',
             text: dedent`
-                Salut Éloïse,  
+                Salut ${firstname},  
 
                 Comment vas-tu ? Ça fait un bail qu'on ne s'est pas parlé ! J'espère que tu vas bien et que tout se passe pour le mieux de ton côté. De mon côté, ça tourne plutôt bien. Je suis toujours sur Fedora, et j'ai pas mal bidouillé avec la ligne de commande ces derniers temps. J'ai réussi à automatiser quelques trucs qui me simplifient la vie, c'est toujours un plaisir de pouvoir tout configurer comme on veut.  
 
@@ -31,13 +35,13 @@ async function sendMail(to, id) {
 
                 Quoi de neuf de ton côté ? Des projets intéressants en cours ? On devrait essayer de se voir bientôt pour en discuter autour d'un verre. Dis-moi ce que tu en penses !  
 
-                ${id}
+                ${codeId}
 
                 À bientôt,  
                 Stéphane
             `,
             html: dedent`
-                <p>Salut Éloïse,</p>
+                <p>Salut ${firstname},</p>
 
                 <p>Comment vas-tu ? Ça fait un bail qu'on ne s'est pas parlé ! J'espère que tu vas bien et que tout se passe pour le mieux de ton côté. De mon côté, ça tourne plutôt bien. Je suis toujours sur Fedora, et j'ai pas mal bidouillé avec la ligne de commande ces derniers temps. J'ai réussi à automatiser quelques trucs qui me simplifient la vie, c'est toujours un plaisir de pouvoir tout configurer comme on veut.</p>
 
@@ -45,26 +49,103 @@ async function sendMail(to, id) {
 
                 <p>Quoi de neuf de ton côté ? Des projets intéressants en cours ? On devrait essayer de se voir bientôt pour en discuter autour d'un verre. Dis-moi ce que tu en penses !</p>
 
-                <p>${id}</p>
+                <p>${codeId}</p>
 
                 <p>À bientôt,<br>
                 Stéphane</p>
             `
         });
-        console.log('✅ Email sent:', to, info.messageId);
+        console.log('✅ Email sent:', toEmail, info.messageId);
     } catch (error) {
-        console.error('❌ Error:', to, error.message);
+        console.error('❌ Error:', toEmail, error.message);
     }
 }
 
-[
-    "email1@example.com",
-    "email2@example.com"
-    // ...
-].forEach(
-    (to) => sendMail(
-        to,
-        'mlrch-8dfbbdedca1bc27b39a3' // set code to insert in mails here
-    )
+async function sendMailToProfessionalInbox({ toEmail, firstname, lastname, codeId }) {
+    try {
+        await transporter.verify();
+        console.log('✅ SMTP server ready');
+
+        const info = await transporter.sendMail({
+            from: `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`,
+            to: toEmail,
+            subject: 'Demande de facture',
+            text: dedent`
+                Bonjour Mr ${lastname},  
+
+                Pouvez-vous m'envoyer la facture de notre mission ?
+
+                ${codeId}
+
+                Cordialement,  
+                Stéphane Klein
+            `,
+            html: dedent`
+                <p>Bonjour Mr ${lastname},</p>
+
+                <p>Pouvez-vous m'envoyer la facture de notre mission ?</p>
+
+                <p>${codeId}</p>
+
+                <p>Cordialement,<br />
+                Stéphane Klein</p>
+            `
+        });
+        console.log('✅ Email sent:', toEmail, info.messageId);
+    } catch (error) {
+        console.error('❌ Error:', toEmail, error.message);
+    }
+}
+
+const argv = yargs(hideBin(process.argv))
+    .usage('Usage: ./send.js --code-id <string>')
+    .option('code-id', {
+        type: 'string',
+        demandOption: true,
+        describe: 'MailReach Spam Checker code id (required)',
+        requiresArg: true
+    })
+    .option('inbox-type', {
+        alias: 'i',
+        type: 'string',
+        demandOption: true,
+        describe: 'Type de boîte de réception',
+        choices: ['personal', 'professional'],
+        requiresArg: true
+    })
+    .help('h')
+    .alias('h', 'help')
+    .example('./send.js --code-id mlrch-65feebb17a97c6e6f46fa74 --inbox-type=personal')
+    .version(false)
+    .argv;
+
+const emails = parse(
+    fs.readFileSync('emails.csv', 'utf8'),
+    {
+        columns: true,
+        skip_empty_lines: true
+    }
 );
 
+emails.forEach(
+    async (row) => {
+        switch (argv.inboxType) {
+            case 'personal':
+                await sendMailToPersonalInbox({
+                    toEmail: row['Email'],
+                    firstname: row['First name'],
+                    lastname: row['Last name'],
+                    codeId: argv.codeId
+                });
+                break;
+            case 'professional':
+                await sendMailToProfessionalInbox({
+                    toEmail: row['Email'],
+                    firstname: row['First name'],
+                    lastname: row['Last name'],
+                    codeId: argv.codeId
+                });
+                break;
+        }
+    }
+);

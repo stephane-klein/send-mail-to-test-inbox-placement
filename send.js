@@ -109,7 +109,6 @@ const argv = yargs(hideBin(process.argv))
         alias: 'i',
         type: 'string',
         demandOption: true,
-        describe: 'Type de boîte de réception',
         choices: ['personal', 'professional'],
         requiresArg: true
     })

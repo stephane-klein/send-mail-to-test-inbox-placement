@@ -1,4 +1,4 @@
-I use this script to send a dummy email to the seed emails provided by <https://mailreach.co>.
+I use this script to send a dummy email to the seed emails provided by <https://mailreach.co>, <https://mailtester.com> or <https://www.mailercheck.com>.
 
 ```sh
 $ mise install
@@ -20,7 +20,7 @@ Go to the “Spam Checker” section of <https://app.mailreach.co> and export se
 Retrieve the code ID and select the type of destination email address (personal or professional), then pass these parameters as options to `./send.js`:
 
 ```
-$ ./send.js --code-id <CODE_ID> --inbox-type=<personal|professional>
+$ ./send.js --code-id <CODE_ID> --csv-source=mailreach|mailtester|mailercheck --inbox-type=personal|professional
 ```
 
 Go back to MailReach Spam Checker and observe the test results.

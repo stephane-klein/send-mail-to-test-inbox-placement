@@ -98,7 +98,7 @@ async function sendMailToProfessionalInbox({ toEmail, firstname, lastname, codeI
 }
 
 const argv = yargs(hideBin(process.argv))
-    .usage('Usage: ./send.js --code-id <string>')
+    .usage('Usage: ./send.js --code-id <CODE_ID> --csv-source=mailreach|mailtester|mailercheck --inbox-type=personal|professional')
     .option('code-id', {
         type: 'string',
         demandOption: true,
@@ -106,45 +106,89 @@ const argv = yargs(hideBin(process.argv))
         requiresArg: true
     })
     .option('inbox-type', {
-        alias: 'i',
         type: 'string',
         demandOption: true,
         choices: ['personal', 'professional'],
         requiresArg: true
     })
+    .option('csv-source', {
+        type: 'string',
+        demandOption: true,
+        choices: ['mailreach', 'mailtester', 'mailercheck'],
+        requiresArg: true
+    })
     .help('h')
     .alias('h', 'help')
-    .example('./send.js --code-id mlrch-65feebb17a97c6e6f46fa74 --inbox-type=personal')
+    .example('./send.js --code-id mlrch-65feebb17a97c6e6f46fa74 --inbox-type=personal --csv-source=mailreach')
     .version(false)
     .argv;
 
-const emails = parse(
-    fs.readFileSync('emails.csv', 'utf8'),
-    {
-        columns: true,
-        skip_empty_lines: true
-    }
-);
+let emails;
 
-emails.forEach(
-    async (row) => {
-        switch (argv.inboxType) {
-            case 'personal':
-                await sendMailToPersonalInbox({
-                    toEmail: row['Email'],
-                    firstname: row['First name'],
-                    lastname: row['Last name'],
-                    codeId: argv.codeId
-                });
-                break;
-            case 'professional':
-                await sendMailToProfessionalInbox({
-                    toEmail: row['Email'],
-                    firstname: row['First name'],
-                    lastname: row['Last name'],
-                    codeId: argv.codeId
-                });
-                break;
-        }
-    }
-);
+switch (argv.csvSource) {
+    case 'mailreach':
+        emails = parse(
+            fs.readFileSync('emails.csv', 'utf8'),
+            {
+                columns: true,
+                skip_empty_lines: true
+            }
+        );
+
+        emails.forEach(
+            async (row) => {
+                switch (argv.inboxType) {
+                    case 'personal':
+                        await sendMailToPersonalInbox({
+                            toEmail: row['Email'],
+                            firstname: row['First name'],
+                            lastname: row['Last name'],
+                            codeId: argv.codeId
+                        });
+                        break;
+                    case 'professional':
+                        await sendMailToProfessionalInbox({
+                            toEmail: row['Email'],
+                            firstname: row['First name'],
+                            lastname: row['Last name'],
+                            codeId: argv.codeId
+                        });
+                        break;
+                }
+            }
+        );
+        break;
+    case 'mailtester':
+    case 'mailercheck':
+        emails = parse(
+            fs.readFileSync('emails.csv', 'utf8'),
+            {
+                columns: false,
+                skip_empty_lines: true
+            }
+        );
+
+        emails.forEach(
+            async (row) => {
+                switch (argv.inboxType) {
+                    case 'personal':
+                        await sendMailToPersonalInbox({
+                            toEmail: row[0],
+                            firstname: 'John',
+                            lastname: 'Doe',
+                            codeId: argv.codeId
+                        });
+                        break;
+                    case 'professional':
+                        await sendMailToProfessionalInbox({
+                            toEmail: row[0],
+                            firstname: 'John',
+                            lastname: 'Doe',
+                            codeId: argv.codeId
+                        });
+                        break;
+                }
+            }
+        );
+        break;
+}
